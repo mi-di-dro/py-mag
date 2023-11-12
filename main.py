@@ -1,4 +1,4 @@
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 import tkinter as tk
 from tkinter import ttk
 
@@ -86,7 +86,7 @@ def main():
                 ),
             ],
         ),
-        (
+        Brand(
             brandNames[1],
             [
                 Item(
@@ -107,7 +107,7 @@ def main():
                 ),
             ],
         ),
-        (
+        Brand(
             brandNames[2],
             [
                 Item(
@@ -128,7 +128,7 @@ def main():
                 ),
             ],
         ),
-        (
+        Brand(
             brandNames[3],
             [
                 Item(
@@ -149,7 +149,7 @@ def main():
                 ),
             ],
         ),
-        (
+        Brand(
             brandNames[4],
             [
                 Item(
@@ -180,8 +180,9 @@ def main():
     fr_item = tk.Frame(window, relief=tk.RAISED, bd=2)
 
     def selectedBrand(event):
-        currentBrand = cb_brand.get()
-        cb_item["values"] = [it.name for it in itemTypes]
+        brand = brands[[i for i, x in enumerate(brands) if x.name == cb_brand.get()][0]]
+        cb_item.set("")
+        cb_item["values"] = [it.type.name for it in brand.items]
         cb_item["state"] = "readonly"
 
     lb_brand = tk.Label(fr_brand, text="Выберите фирму", height=3, width=30)
@@ -190,7 +191,6 @@ def main():
 
     def selectedItem(event):
         selection = cb_item.get()
-        window.title(selection)
 
     lb_item = tk.Label(fr_item, text="Номенклатура", height=3, width=30)
     cb_item = ttk.Combobox(
