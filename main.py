@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import tkinter as tk
 from tkinter import ttk
+from tkinter.messagebox import showinfo
 
 
 @dataclass
@@ -57,10 +58,33 @@ class Brand:
 
 def main():
     brandNames = ["AMD", "Zommer", "Manover", "Original", "TORK"]
-    materials = ["Материал 1", "Материал 2", "Материал 3", "Материал 4"]
-    marks = ["Без маркировки", "AMD", "Zommer", "Manover", "TORK"]
-    boxMarks = ["NONAME", "AMD", "Zommer", "Manover", "TORK", "Original"]
-    groupBoxMarks = ["NONAME", "AMD", "Manover", "TORK"]
+    materials = [
+        Material("Материал 1"),
+        Material("Материал 2"),
+        Material("Материал 3"),
+        Material("Материал 4"),
+    ]
+    marks = [
+        Mark("Без маркировки"),
+        Mark("AMD"),
+        Mark("Zommer"),
+        Mark("Manover"),
+        Mark("TORK"),
+    ]
+    boxMarks = [
+        BoxMark("NONAME"),
+        BoxMark("AMD"),
+        BoxMark("Zommer"),
+        BoxMark("Manover"),
+        BoxMark("TORK"),
+        BoxMark("Original"),
+    ]
+    groupBoxMarks = [
+        GroupBoxMark("NONAME"),
+        GroupBoxMark("AMD"),
+        GroupBoxMark("Manover"),
+        GroupBoxMark("TORK"),
+    ]
     itemTypes = [ItemType("Ролик приводного ремня"), ItemType("Расширительный бачок")]
     subItemTypes = [SubItemType("Подшипник")]
     subItems = [SubItem(subItemTypes[0], "NONAME"), SubItem(subItemTypes[0], "KRAFT")]
@@ -172,27 +196,86 @@ def main():
         ),
     ]
 
+    current_item = None
+    current_brand = None
+
     window = tk.Tk()
     window.title("Производство и упаковка товара")
-    window.rowconfigure(0, minsize=800, weight=1)
-    window.columnconfigure(2, minsize=800, weight=1)
+    window.rowconfigure(0, minsize=400, weight=1)
+    window.columnconfigure(2, minsize=400, weight=1)
     fr_brand = tk.Frame(window, relief=tk.RAISED, bd=2)
     fr_item = tk.Frame(window, relief=tk.RAISED, bd=2)
+    fr_props = tk.Frame(window, relief=tk.RAISED, bd=2)
 
     def selectedBrand(event):
-        brand = brands[[i for i, x in enumerate(brands) if x.name == cb_brand.get()][0]]
+        global current_brand
+        global current_item
+        current_brand = brands[
+            [i for i, x in enumerate(brands) if x.name == cb_brand.get()][0]
+        ]
         cb_item.set("")
-        cb_item["values"] = [it.type.name for it in brand.items]
+        cb_item["values"] = [it.type.name for it in current_brand.items]
         cb_item["state"] = "readonly"
+        btn_material["state"] = "disabled"
+        btn_subItems["state"] = "disabled"
+        btn_mark["state"] = "disabled"
+        btn_boxMark["state"] = "disabled"
+        btn_groupBoxMark["state"] = "disabled"
+        current_item = None
 
-    lb_brand = tk.Label(fr_brand, text="Выберите фирму", height=3, width=30)
+    lb_brand = tk.Label(fr_brand, text="Выберите фирму", height=3, width=50)
     cb_brand = ttk.Combobox(fr_brand, values=brandNames, state="readonly")
     cb_brand.bind("<<ComboboxSelected>>", selectedBrand)
 
     def selectedItem(event):
-        selection = cb_item.get()
+        global current_item
+        global current_brand
+        current_item = [
+            it for it in current_brand.items if it.type.name == cb_item.get()
+        ][0]
+        btn_material["state"] = "active"
+        btn_subItems["state"] = "active"
+        btn_mark["state"] = "active"
+        btn_boxMark["state"] = "active"
+        btn_groupBoxMark["state"] = "active"
 
-    lb_item = tk.Label(fr_item, text="Номенклатура", height=3, width=30)
+    def click_btn_material():
+        global current_item
+        showinfo(title="Необходимый материал", message=current_item.material.name)
+
+    def click_btn_subItems():
+        global current_item
+        sub_items = [
+            ("Тип детали: " + si.type.name + "  " + "Марка: " + si.name)
+            for si in current_item.subitems
+        ]
+
+        showinfo(
+            title="Необходимые детали",
+            message="Нет других деталей в составе"
+            if len(sub_items) == 0
+            else "\n".join(sub_items),
+        )
+
+    def click_btn_mark():
+        global current_item
+        showinfo(title="Необходимая маркировка", message=current_item.mark.name)
+
+    def click_btn_boxMark():
+        global current_item
+        showinfo(
+            title="Необходимая индивидуальная маркировка",
+            message=current_item.boxMark.name,
+        )
+
+    def click_btn_groupBoxMark():
+        global current_item
+        showinfo(
+            title="Необходимая групповая маркировка",
+            message=current_item.groupBoxMark.name,
+        )
+
+    lb_item = tk.Label(fr_item, text="Номенклатура", height=3, width=50)
     cb_item = ttk.Combobox(
         fr_item,
         values=[],
@@ -200,13 +283,45 @@ def main():
     )
     cb_item.bind("<<ComboboxSelected>>", selectedItem)
 
+    lb_props = tk.Label(fr_props, text="Параметры", height=3, width=50)
+    btn_material = tk.Button(
+        fr_props, text="Материал", command=click_btn_material, state="disabled"
+    )
+    btn_subItems = tk.Button(
+        fr_props, text="Детали в составе", command=click_btn_subItems, state="disabled"
+    )
+    btn_mark = tk.Button(
+        fr_props, text="Маркировка", command=click_btn_mark, state="disabled"
+    )
+    btn_boxMark = tk.Button(
+        fr_props,
+        text="Индивидуальная упаковка",
+        command=click_btn_boxMark,
+        state="disabled",
+    )
+    btn_groupBoxMark = tk.Button(
+        fr_props,
+        text="Групповая упаковка",
+        command=click_btn_groupBoxMark,
+        state="disabled",
+    )
+
     fr_brand.grid(row=0, column=0, sticky="ns", padx=5, pady=5)
     lb_brand.grid(row=0, column=0, sticky="ew", padx=2, pady=2)
     cb_brand.grid(row=1, column=0, sticky="ew", padx=2, pady=2)
 
-    fr_item.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+    fr_item.grid(row=0, column=1, sticky="ns", padx=5, pady=5)
     lb_item.grid(row=0, column=1, sticky="ew", padx=2, pady=2)
     cb_item.grid(row=1, column=1, sticky="ew", padx=2, pady=2)
+
+    fr_props.grid(row=0, column=2, sticky="nsew", padx=5, pady=5)
+    lb_props.grid(row=0, column=2, sticky="ew", padx=2, pady=2)
+    btn_material.grid(row=1, column=2, sticky="ew", padx=2, pady=2)
+    btn_subItems.grid(row=2, column=2, sticky="ew", padx=2, pady=2)
+    btn_mark.grid(row=3, column=2, sticky="ew", padx=2, pady=2)
+    btn_boxMark.grid(row=4, column=2, sticky="ew", padx=2, pady=2)
+    btn_groupBoxMark.grid(row=5, column=2, sticky="ew", padx=2, pady=2)
+
     window.mainloop()
 
 
